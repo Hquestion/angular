@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Question.GitHub.io : Question的github博客">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Question.GitHub.io</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/Hquestion/question.github.io">View on GitHub</a>
+
+          <h1 id="project_title">Question.GitHub.io</h1>
+          <h2 id="project_tagline">Question的github博客</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/Hquestion/question.github.io/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/Hquestion/question.github.io/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="深入理解-angularjs-的-scope" class="anchor" href="#%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3-angularjs-%E7%9A%84-scope" aria-hidden="true"><span class="octicon octicon-link"></span></a>深入理解 AngularJS 的 Scope</h1>
+
+<p>2013-07-28 18:49 原文 简体 繁體 27,058 次围观</p>
+
+<p>JavaScript 的原型继承就是奇葩。</p>
+
+<p>之前在 V2EX 上看到讨论说，不会 OOP 的 JavaScript 的程序员就是野生程序员。看来我是属于野生的。</p>
+
+<p>一、遇到的问题
+问题发生在使用 AngularJS 嵌套 Controller 的时候。因为每个 Controller 都有它对应的 Scope（相当于作用域、控制范围），所以 Controller 的嵌套，也就意味着 Scope 的嵌套。这个时候如果两个 Scope 内都有同名的 Model 会发生什么呢？从子 Scope 怎样更新父 Scope 里的 Model 呢？</p>
+
+<p>这个问题很典型，比方说当前页面是一个产品列表，那么就需要定义一个 ProductListController</p>
+
+<p>function ProductListController($scope, $http) {
+    $http.get('/api/products.json')
+        .success(function(data){
+            $scope.productList = data;
+        });
+    $scope.selectedProduct = {};
+}
+你大概看到了在 Scope 里还定义了一个 selectedProduct 的 Model，表示选中了某一个产品。这时会获取该产品详情，而页面通过 AngularJS 中的 $routeProvider 自动更新，拉取新的详情页模板，模板中有一个 ProductDetailController</p>
+
+<p>function ProductDetailController($scope, $http, $routeParams) {
+    $http.get('/api/products/'+$routeParams.productId+'.json')
+        .success(function(data){
+            $scope.selectedProduct = data;
+        });
+}
+有趣的事情发生了，在这里也有一个 selectedProduct ，它会怎样影响 ProductListController 中的 selectedProduct 呢？</p>
+
+<p>答案是没有影响。在 AnuglarJS 里子 Scope 确实会继承父 Scope 中的对象，但当你试下对基本数据类型（string, number, boolean）的 双向数据绑定 时，就会发现一些奇怪的行为，继承并不像你想象的那样工作。子 Scope 的属性隐藏（覆盖）了父 Scope 中的同名属性，对子 Scope 属性（表单元素）的更改并不更新父 Scope 属性的值。这个行为实际上不是 AngularJS 特有的，JavaScript 本身的原型链就是这样工作的。开发者通常都没有意识到 ng-repeat, ng-switch, ng-view 和 ng-include 统统都创建了他们新的子 scopes，所以在用到这些 directive 时也经常出问题。</p>
+
+<p>二、解决的办法
+解决的办法就是不使用基本数据类型，而在 Model 里永远多加一个点.</p>
+
+<p>使用
+
+来替代
+
+是不是很坑爹？下面这个例子很明确地表达了我所想表达的奇葩现象</p>
+
+<p>app.controller('ParentController',function($scope){
+    $scope.parentPrimitive = "some primitive"
+    $scope.parentObj = {};
+    $scope.parentObj.parentProperty = "some value";
+});
+app.controller('ChildController',function($scope){
+    $scope.parentPrimitive = "this will NOT modify the parent"
+    $scope.parentObj.parentProperty = "this WILL modify the parent";
+});</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Question.GitHub.io maintained by <a href="https://github.com/Hquestion">Hquestion</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
